@@ -1,0 +1,23 @@
+[package]
+name = "ttt-game-server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix = "0.13"
+redis = "0.21"
+chrono = { version = "0.4", features = ["serde"] }
+tokio = "1.21"
+log = "0.4"
+env_logger = "0.9"
+uuid = { version = "1.1", features = ["serde", "v4"] }
+actix-web-actors = "4.1"
+serde = "1.0"
+serde_json = "1.0"
+serde_repr = "0.1"
+rand = "0.8"
+
+[dependencies.ttt-db]
+path = "../ttt-db"

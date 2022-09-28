@@ -1,0 +1,20 @@
+[package]
+name = "ttt-db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+serde = "1.0"
+serde_json = "1.0"
+serde_repr = "0.1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "^1.1", features = ["serde", "v4"] }
+regex = "1"
+argonautica = "0.2"
+sea-orm = { version = "^0.9", features = ["sqlx-postgres", "runtime-actix-native-tls", "macros", "with-chrono", "with-uuid"], default-features = false }
+redis = "0.21"
+lazy_static = "1.4"
+derive_more = "0.99"
+petname = "1.1.2"
+convert_case = "0.6"
+skillratings = "0.13"
