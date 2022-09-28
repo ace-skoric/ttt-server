@@ -106,24 +106,17 @@ impl GameState {
             &[1, 4, 7],
             &[2, 5, 8],
             &[0, 4, 8],
-            &[3, 4, 6],
+            &[2, 4, 6],
         ];
         for triple in triples {
-            let vec1 = triple
+            let vec = triple
                 .iter()
                 .map(|i| self.board[*i].clone())
                 .collect::<Vec<Option<Sign>>>();
-            let vec2 = vec1.clone();
-            let mut iter1 = vec1.iter();
-            let mut iter2 = vec2.iter();
-            if iter1.all(|sign| *sign == Some(Sign::X)) {
-                let t = iter1.collect::<Vec<&Option<Sign>>>();
-                println!("{:?}", t);
+            if vec.iter().all(|sign| *sign == Some(Sign::X)) {
                 self.winner = Some(self.x_data.user_id);
                 return true;
-            } else if iter2.all(|sign| *sign == Some(Sign::O)) {
-                let t = iter2.collect::<Vec<&Option<Sign>>>();
-                println!("{:?}", t);
+            } else if vec.iter().all(|sign| *sign == Some(Sign::O)) {
                 self.winner = Some(self.o_data.user_id);
                 return true;
             }
