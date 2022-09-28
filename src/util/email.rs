@@ -21,15 +21,22 @@ lazy_static! {
 pub fn send_verification_email(username: &str, email: &str, uuid: Uuid) -> Result<(), String> {
     let email = Message::builder()
         .to(format!("{} <{}>", username, email).parse().unwrap())
-        .from(format!("Crystalium <{}@{}>", env::var("MAIL_USERNAME").unwrap(), env::var("DOMAIN").unwrap()).parse().unwrap())
+        .from(
+            format!(
+                "Tic Tac Toe <{}@{}>",
+                env::var("MAIL_USERNAME").unwrap(),
+                env::var("DOMAIN").unwrap()
+            )
+            .parse()
+            .unwrap(),
+        )
         .subject("Email verification needed")
         .body(format!(
             "Hi {},\n
-            Thanks for getting started with Crystalium!\n
-            We need a little more information to complete your registration, including a confirmation of your email address.\n
+            Thanks for getting started with our Tic Tac Tie!\n
             Click below to confirm your email address:\n
             https://{}/email_verification/{}\n
-            If you have problems, please paste the above URL into your web browser.", 
+            If you have problems, please paste the above URL into your web browser.",
             username,
             env::var("DOMAIN").expect("DOMAIN not set!"),
             uuid

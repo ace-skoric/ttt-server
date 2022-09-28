@@ -1,6 +1,7 @@
 use sea_orm::{entity::*, query::*, ActiveValue::Set};
 
 use chrono::prelude::*;
+use log::warn;
 use uuid::Uuid;
 
 use crate::entity::{email_verification, users};
@@ -40,7 +41,7 @@ impl TttDbConn {
                             Ok(_) => Ok(tx.commit().await?),
                             Err(e) => {
                                 tx.rollback().await?;
-                                println!("Could not send verification email: {:?}", e);
+                                warn!("Could not send verification email: {:?}", e);
                                 Err(TttDbErr::Generic(
                                     "Could not send verification email.".into(),
                                 ))

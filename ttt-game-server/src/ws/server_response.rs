@@ -23,12 +23,3 @@ pub(crate) struct TimerMessage {
     pub your_time: f64,
     pub opp_time: f64,
 }
-
-impl TimerMessage {
-    pub(crate) fn new(your_time: f64, opp_time: f64) -> Self {
-        Self {
-            your_time,
-            opp_time,
-        }
-    }
-}

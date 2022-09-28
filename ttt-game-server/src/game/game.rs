@@ -3,21 +3,21 @@ use actix::{
 };
 use chrono::{DateTime, Utc};
 use log::info;
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, time::Duration};
 use uuid::Uuid;
 
-use ttt_db::{Match, TttDbConn};
+use ttt_db::Match;
 
 use crate::{
-    game::game_state::{State, UserGameState},
+    game::game_state::State,
     server::{messages::GameEnded, GameServer},
     timer::{GetTimer, PauseTimer, StartTimer, StopTimer, Timer},
-    ws::{message::StopConnection, GameWebsocket, ServerResponseMessage, WsMessage},
+    ws::{GameWebsocket, ServerResponseMessage},
 };
 
 use super::{
     completed_game::CompletedGame,
-    game_state::{self, GameState, Timers},
+    game_state::{GameState, Timers},
     messages::*,
     ClientCommand,
 };

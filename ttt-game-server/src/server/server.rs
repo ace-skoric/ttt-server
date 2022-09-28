@@ -1,9 +1,9 @@
 use actix::{fut::wrap_future, Actor, ActorFutureExt, Addr, AsyncContext, Context, Handler};
 use log::{info, warn};
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{collections::HashMap, sync::Arc};
 use uuid::Uuid;
 
-use ttt_db::{Match, TttDbConn};
+use ttt_db::TttDbConn;
 
 use crate::game::Game;
 

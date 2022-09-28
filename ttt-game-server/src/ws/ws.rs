@@ -8,7 +8,7 @@ use actix::{ActorContext, Addr};
 use actix::{AsyncContext, Handler};
 use actix_web_actors::ws::Message::Text;
 use actix_web_actors::ws::{self, CloseCode, CloseReason};
-use log::{debug, info};
+use log::info;
 use std::time::{Duration, Instant};
 
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);

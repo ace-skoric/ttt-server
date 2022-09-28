@@ -1,9 +1,9 @@
 use crate::entity::{games, user_stats};
 use crate::{TttDbConn, TttDbErr};
 use redis::AsyncCommands;
+use sea_orm::entity::*;
 use sea_orm::prelude::DateTimeWithTimeZone;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{entity::*, QueryFilter, TransactionTrait};
 use skillratings::config::EloConfig;
 use skillratings::elo::elo;
 use skillratings::outcomes::Outcomes;
