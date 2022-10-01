@@ -27,7 +27,7 @@ async fn main() -> std::io::Result<()> {
     env::init_env();
     env_logger::init();
 
-    let tls_config = util::load_rustls_config();
+    // let tls_config = util::load_rustls_config();
 
     // Connect to Postgres backend
     let db_url = &*env::DATABASE_URL;
@@ -61,20 +61,18 @@ async fn main() -> std::io::Result<()> {
                     .build(),
             )
             .app_data(web::Data::new(state.clone()))
-            .service(
-                web::scope("/api/v1")
-                    .configure(auth::init_routes)
-                    .configure(user::init_routes)
-                    .configure(email_verify::init_routes)
-                    .configure(matchmaking::init_routes)
-                    .configure(data::init_routes)
-                    .configure(elo::init_routes)
-                    .configure(game::init_routes),
-            )
+            .configure(auth::init_routes)
+            .configure(user::init_routes)
+            .configure(email_verify::init_routes)
+            .configure(matchmaking::init_routes)
+            .configure(data::init_routes)
+            .configure(elo::init_routes)
+            .configure(game::init_routes)
     });
     let host = &*env::HOST.as_str();
     let port = *env::PORT;
-    let server = server.bind_rustls((host, port), tls_config)?;
+    let server = server.bind((host, port))?;
+    // let server = server.bind_rustls((host, port), tls_config)?;
 
     // Run mm_worker
     // Run server
