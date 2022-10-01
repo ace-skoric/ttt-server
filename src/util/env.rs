@@ -1,6 +1,7 @@
 use actix_web::cookie::Key;
 use dotenv::dotenv;
 use lazy_static::lazy_static;
+use log::info;
 use std::env;
 
 lazy_static! {
@@ -45,5 +46,5 @@ pub fn init_env() {
     let _ = REDIS_SECRET;
     let _ = HASH_SECRET;
     let _ = RUST_LOG;
-    println!("Environment variables initialized successfuly");
+    info!("Environment variables initialized successfuly");
 }

@@ -27,8 +27,6 @@ async fn main() -> std::io::Result<()> {
     env::init_env();
     env_logger::init();
 
-    // let tls_config = util::load_rustls_config();
-
     // Connect to Postgres backend
     let db_url = &*env::DATABASE_URL;
     let redis_url = &*env::REDIS_URL;
