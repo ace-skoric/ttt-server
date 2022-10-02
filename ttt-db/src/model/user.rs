@@ -1,7 +1,6 @@
 use crate::ttt_db::{TttDbConn, TttDbErr};
 use crate::util::validators::*;
 
-use argonautica::utils::generate_random_base64_encoded_string;
 use convert_case::{Case, Casing};
 use petname::Petnames;
 use sea_orm::ActiveValue::Set;
@@ -100,7 +99,7 @@ impl TttDbConn {
         let username = Petnames::default().generate_one(3, "_");
         let email = username.clone() + "@askoric.me";
         let username = username.to_case(Case::Pascal);
-        let password = generate_random_base64_encoded_string(8).unwrap();
+        let password = "Password".to_string();
         let mut user = UserMessage {
             username,
             email,

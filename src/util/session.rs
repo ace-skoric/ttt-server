@@ -5,6 +5,7 @@ use crate::util::error::TttApiErr;
 
 #[derive(Serialize, Deserialize)]
 pub struct UserSession {
+    #[serde(skip_serializing)]
     pub id: i64,
     pub username: String,
     pub admin: bool,

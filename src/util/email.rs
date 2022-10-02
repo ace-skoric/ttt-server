@@ -22,13 +22,9 @@ pub fn send_verification_email(username: &str, email: &str, uuid: Uuid) -> Resul
     let email = Message::builder()
         .to(format!("{} <{}>", username, email).parse().unwrap())
         .from(
-            format!(
-                "Tic Tac Toe <{}@{}>",
-                env::var("MAIL_USERNAME").unwrap(),
-                env::var("DOMAIN").unwrap()
-            )
-            .parse()
-            .unwrap(),
+            format!("Tic Tac Toe <{}>", env::var("MAIL_USERNAME").unwrap())
+                .parse()
+                .unwrap(),
         )
         .subject("Email verification needed")
         .body(format!(

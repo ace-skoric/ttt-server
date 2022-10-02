@@ -75,5 +75,4 @@ async fn main() -> std::io::Result<()> {
     // Run mm_worker
     // Run server
     server.run().await
-    // let _ = future::try_join(server.run(), mm_worker.run()).await;
 }
