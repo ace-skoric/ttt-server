@@ -1,4 +1,3 @@
-use argonautica::{Hasher, Verifier};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::env;
@@ -23,22 +22,41 @@ pub(crate) fn is_valid_password(password: &str) -> bool {
 }
 
 pub(crate) fn hash_password(password: &str) -> String {
-    let mut hasher = Hasher::default();
-    hasher
-        .with_password(password)
-        .with_secret_key(env::var("HASH_SECRET").expect("Hash secret not set"))
-        // .with_salt("somesalt")
-        .hash()
-        .unwrap()
+    let password = password.as_bytes();
+    let secret = env::var("HASH_SECRET").expect("HASH_SECRET not set");
+    let secret = secret.as_bytes();
+    let salt = b"thisissomesalt";
+    let config = argon2::Config {
+        variant: argon2::Variant::Argon2id,
+        version: argon2::Version::Version13,
+        mem_cost: 4096,
+        time_cost: 32,
+        lanes: 2,
+        thread_mode: argon2::ThreadMode::Parallel,
+        secret,
+        ad: "thisissomeassociateddata".as_bytes(),
+        hash_length: 16,
+    };
+
+    let hash = argon2::hash_encoded(password, salt, &config).expect("Error hashing password");
+
+    hash
 }
 
 pub(crate) fn verify_password(password: &str, hash: &str) -> bool {
-    let mut verifier = Verifier::default();
-    verifier
-        .with_hash(hash)
-        .with_password(password)
-        .with_secret_key(env::var("HASH_SECRET").expect("Hash secret not set"))
-        // .with_salt("somesalt")
-        .verify()
-        .unwrap()
+    let password = password.as_bytes();
+    let secret = env::var("HASH_SECRET").expect("HASH_SECRET not set");
+    let secret = secret.as_bytes();
+
+    let res = argon2::verify_encoded_ext(
+        hash,
+        password,
+        secret,
+        "thisissomeassociateddata".as_bytes(),
+    );
+
+    match res {
+        Ok(res) => res,
+        Err(_) => false,
+    }
 }
