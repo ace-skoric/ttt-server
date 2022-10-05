@@ -70,7 +70,6 @@ async fn main() -> std::io::Result<()> {
     let host = &*env::HOST.as_str();
     let port = *env::PORT;
     let server = server.bind((host, port))?;
-    // let server = server.bind_rustls((host, port), tls_config)?;
 
     // Run mm_worker
     // Run server
