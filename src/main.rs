@@ -59,13 +59,16 @@ async fn main() -> std::io::Result<()> {
                     .build(),
             )
             .app_data(web::Data::new(state.clone()))
-            .configure(auth::init_routes)
-            .configure(user::init_routes)
-            .configure(email_verify::init_routes)
-            .configure(matchmaking::init_routes)
-            .configure(data::init_routes)
-            .configure(elo::init_routes)
-            .configure(game::init_routes)
+            .service(
+                web::scope("/api/v1")
+                    .configure(auth::init_routes)
+                    .configure(user::init_routes)
+                    .configure(email_verify::init_routes)
+                    .configure(matchmaking::init_routes)
+                    .configure(data::init_routes)
+                    .configure(elo::init_routes)
+                    .configure(game::init_routes),
+            )
     });
     let host = &*env::HOST.as_str();
     let port = *env::PORT;
