@@ -22,11 +22,14 @@ impl TttDbConn {
             None => Err(TttDbErr::UserNotFound),
         }
     }
-    pub async fn sign_up(
+    pub async fn sign_up<F>(
         &self,
         mut user: UserMessage,
-        send_verification_email: fn(&str, &str, Uuid) -> Result<(), String>,
-    ) -> Result<(), TttDbErr> {
+        send_verification_email: F,
+    ) -> Result<(), TttDbErr>
+    where
+        F: FnOnce(String, String, Uuid) -> (),
+    {
         user.email = user.email.trim().into();
         user.username = user.username.trim().into();
         user.password = user.password.trim().into();
@@ -84,16 +87,83 @@ impl TttDbConn {
         }
         .insert(&tx)
         .await?;
-        match send_verification_email(&user.username, &user.email, uuid) {
-            Ok(_) => Ok(tx.commit().await?),
-            Err(e) => {
-                tx.rollback().await?;
-                println!("Could not send verification email: {:?}", e);
-                Err(TttDbErr::Generic(
-                    "Could not send verification email.".into(),
-                ))
+        tx.commit().await?;
+        send_verification_email(user.username, user.email, uuid);
+        Ok(())
+    }
+    pub async fn claim_guest_account<F>(
+        &self,
+        user_id: i64,
+        mut user: UserMessage,
+        send_verification_email: F,
+    ) -> Result<UserModel, TttDbErr>
+    where
+        F: FnOnce(String, String, Uuid) -> (),
+    {
+        user.email = user.email.trim().into();
+        user.username = user.username.trim().into();
+        user.password = user.password.trim().into();
+        if user.email.len() == 0 || user.username.len() == 0 || user.password.len() == 0 {
+            return Err(TttDbErr::Generic(
+                "Email, password and username fields cannot be empty.".into(),
+            ));
+        }
+        if !is_valid_email(&user.email) {
+            return Err(TttDbErr::Generic("Invalid email format.".into()));
+        }
+        if !is_valid_username(&user.username) {
+            return Err(TttDbErr::Generic("Username must consist of alphanumeric characters and cannot contain special characters.".into()));
+        }
+        if !is_valid_password(&user.password) {
+            return Err(TttDbErr::Generic(
+                "Passowrd must be at least 6 characters long.".into(),
+            ));
+        }
+        let db = &self.db;
+        let tx = db.begin().await?;
+        let res = users::Entity::find_by_id(user_id).one(&tx).await?;
+        let res = match res {
+            Some(user) => user,
+            None => return Err(TttDbErr::UserNotFound),
+        };
+        if !res.guest {
+            return Err(TttDbErr::Generic("This is not a guest account.".into()));
+        }
+        let mut active_model = res.into_active_model();
+        if let ActiveValue::Unchanged(uname) = active_model.get(users::Column::Username) {
+            if user.username != uname.unwrap::<String>() {
+                active_model.username = Set(user.username.clone());
             }
         }
+        active_model.email = Set(user.email.clone());
+        active_model.password = Set(hash_password(&user.password));
+        active_model.guest = Set(false);
+        let res = active_model.update(&tx).await;
+        if let Err(err) = res {
+            match err {
+                sea_orm::DbErr::Query(s) => {
+                    if s.contains("users_unique_username") {
+                        return Err(TttDbErr::UsernameConfilct);
+                    } else if s.contains("users_unique_email") {
+                        return Err(TttDbErr::EmailConflict);
+                    } else {
+                        return Err(TttDbErr::DbErr(sea_orm::DbErr::Query(s)));
+                    }
+                }
+                _ => return Err(TttDbErr::DbErr(err)),
+            }
+        }
+        let uuid = Uuid::new_v4();
+        EmailVerificationActiveModel {
+            email: Set(user.email.clone()),
+            id: Set(uuid),
+            ..Default::default()
+        }
+        .insert(&tx)
+        .await?;
+        tx.commit().await?;
+        send_verification_email(user.username, user.email, uuid);
+        Ok(res.unwrap())
     }
     pub async fn create_guest_user(&self) -> Result<UserModel, TttDbErr> {
         let username = Petnames::default().generate_one(3, "_");

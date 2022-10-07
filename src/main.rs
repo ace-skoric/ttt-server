@@ -10,6 +10,7 @@ use ttt_db::TttDbConn;
 mod routes;
 mod util;
 use ttt_game_server::server::GameServer;
+use ttt_mailer::MailWorker;
 use ttt_matchmaking::MatchmakingWorker;
 use util::env;
 
@@ -20,18 +21,21 @@ struct AppState {
     ttt_db: TttDbConn,
     mm_worker: Addr<MatchmakingWorker>,
     game_server: Addr<GameServer>,
+    mail_worker: Addr<MailWorker>,
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env::init_env();
-    env_logger::init();
 
     // Connect to Postgres backend
     let db_url = &*env::DATABASE_URL;
     let redis_url = &*env::REDIS_URL;
     let ttt_db = TttDbConn::new(&db_url, &redis_url).await;
     let ttt_db_arc = Arc::new(ttt_db.clone());
+
+    let mail_worker = MailWorker::new().await;
+    let mail_worker = mail_worker.start();
 
     let game_server = GameServer::new(ttt_db_arc.clone());
     let game_server = game_server.start();
@@ -43,7 +47,9 @@ async fn main() -> std::io::Result<()> {
         ttt_db,
         mm_worker,
         game_server,
+        mail_worker,
     };
+
     // Add redis session store
     let store = RedisSessionStore::new(redis_url)
         .await
@@ -53,7 +59,7 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .wrap(
-                SessionMiddleware::builder(store.clone(), env::REDIS_SECRET.clone())
+                SessionMiddleware::builder(store.clone(), env::SESSION_SECRET.clone())
                     .cookie_name("ttt-session".into())
                     .cookie_secure(false)
                     .build(),

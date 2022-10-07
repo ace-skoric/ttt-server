@@ -1,18 +1,20 @@
 use sea_orm::{entity::*, query::*, ActiveValue::Set};
 
 use chrono::prelude::*;
-use log::warn;
 use uuid::Uuid;
 
 use crate::entity::{email_verification, users};
 use crate::ttt_db::{TttDbConn, TttDbErr};
 
 impl TttDbConn {
-    pub async fn verify_email(
+    pub async fn verify_email<F>(
         &self,
         uuid: Uuid,
-        send_verification_email: fn(&str, &str, Uuid) -> Result<(), String>,
-    ) -> Result<(), TttDbErr> {
+        send_verification_email: F,
+    ) -> Result<(), TttDbErr>
+    where
+        F: FnOnce(String, String, Uuid) -> (),
+    {
         let db = &self.db;
         let tx = db.begin().await?;
         let q = email_verification::Entity::find_by_id(uuid)
@@ -37,16 +39,9 @@ impl TttDbConn {
                         }
                         .insert(&tx)
                         .await?;
-                        match send_verification_email(&user.username, &user.email, uuid) {
-                            Ok(_) => Ok(tx.commit().await?),
-                            Err(e) => {
-                                tx.rollback().await?;
-                                warn!("Could not send verification email: {:?}", e);
-                                Err(TttDbErr::Generic(
-                                    "Could not send verification email.".into(),
-                                ))
-                            }
-                        }
+                        tx.commit().await?;
+                        send_verification_email(user.username, user.email, uuid);
+                        Ok(())
                     }
                     false => {
                         q.delete(&tx).await?;

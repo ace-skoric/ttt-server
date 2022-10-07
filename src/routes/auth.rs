@@ -1,10 +1,11 @@
 use actix_session::Session;
 use actix_web::{post, web, HttpResponse};
+use ttt_mailer::SendVerificationEmail;
+use uuid::Uuid;
 
 use crate::AppState;
 use ttt_db::serializables::UserMessage;
 
-use crate::util::send_verification_email;
 use crate::util::SessionData;
 use crate::util::TttApiErr;
 
@@ -15,7 +16,11 @@ async fn sign_up(
 ) -> Result<HttpResponse, TttApiErr> {
     let db = &data.ttt_db;
     let user = req.into_inner();
-    db.sign_up(user, send_verification_email).await?;
+    let mailer = data.mail_worker.clone();
+    let f = move |username: String, email: String, uuid: Uuid| {
+        mailer.do_send(SendVerificationEmail::new(username, email, uuid))
+    };
+    db.sign_up(user, f).await?;
     Ok(HttpResponse::Created().json("User Created"))
 }
 

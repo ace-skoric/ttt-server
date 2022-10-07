@@ -1,8 +1,8 @@
 use actix_session::Session;
 use actix_web::{get, post, web, HttpResponse};
+use ttt_mailer::SendVerificationEmail;
 use uuid::Uuid;
 
-use crate::util::send_verification_email;
 use crate::util::SessionData;
 use crate::util::TttApiErr;
 use crate::AppState;
@@ -13,7 +13,11 @@ async fn verify(
     uuid: web::Path<Uuid>,
 ) -> Result<HttpResponse, TttApiErr> {
     let db = &data.ttt_db;
-    db.verify_email(*uuid, send_verification_email).await?;
+    let mailer = data.mail_worker.clone();
+    let f = move |username: String, email: String, uuid: Uuid| {
+        mailer.do_send(SendVerificationEmail::new(username, email, uuid))
+    };
+    db.verify_email(*uuid, f).await?;
     Ok(HttpResponse::Created().json("Welcome to Crystalium"))
     //     Err(e) => {
     //         match e {
