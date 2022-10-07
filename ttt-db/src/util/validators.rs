@@ -23,7 +23,7 @@ pub(crate) fn is_valid_password(password: &str) -> bool {
 
 pub(crate) fn hash_password(password: &str) -> String {
     let password = password.as_bytes();
-    let secret = env::var("HASH_SECRET").expect("HASH_SECRET not set");
+    let secret = env::var("PASSWORD_HASH_SECRET").expect("PASSWORD_HASH_SECRET not set!");
     let secret = secret.as_bytes();
     let salt = b"thisissomesalt";
     let config = argon2::Config {
@@ -34,7 +34,7 @@ pub(crate) fn hash_password(password: &str) -> String {
         lanes: 2,
         thread_mode: argon2::ThreadMode::Parallel,
         secret,
-        ad: "thisissomeassociateddata".as_bytes(),
+        ad: &[],
         hash_length: 16,
     };
 
@@ -48,12 +48,7 @@ pub(crate) fn verify_password(password: &str, hash: &str) -> bool {
     let secret = env::var("HASH_SECRET").expect("HASH_SECRET not set");
     let secret = secret.as_bytes();
 
-    let res = argon2::verify_encoded_ext(
-        hash,
-        password,
-        secret,
-        "thisissomeassociateddata".as_bytes(),
-    );
+    let res = argon2::verify_encoded_ext(hash, password, secret, &[]);
 
     match res {
         Ok(res) => res,
