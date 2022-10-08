@@ -1,0 +1,40 @@
+# yaml-language-server: $schema: https://raw.githubusercontent.com/docker/compose/master/compose/config/compose_spec.json
+version: "3.8"
+
+volumes:
+  ttt-cargo:
+  ttt-pg:
+
+
+services:
+  ttt-server:
+    image: ttt-server-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: always
+    init: true
+    depends_on:
+      - db
+      - rdb
+    volumes:
+      - .:/etc/ttt-server
+      - ttt-cargo:/etc/cargo_target
+    ports:
+      - 3000:3000
+    environment:
+      - CARGO_TARGET_DIRECTORY=/etc/cargo_target
+
+  db:
+    image: postgres:alpine
+    restart: always
+    volumes:
+      - ttt-pg:/var/lib/postgresql/data
+      - ./ttt.sql:/docker-entrypoint-initdb.d/ttt.sql
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: tictactoe
+
+  rdb:
+    image: redis:alpine
+    restart: always

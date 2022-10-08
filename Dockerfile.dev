@@ -1,0 +1,6 @@
+FROM clux/muslrust:stable
+WORKDIR /etc/ttt-server
+RUN cargo install cargo-watch systemfd
+RUN --mount=type=cache,target=/root/.cargo/registry
+
+ENTRYPOINT ["cargo", "watch", "-x", "run"]

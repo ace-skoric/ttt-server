@@ -64,8 +64,8 @@ lazy_static! {
         });
         if key.is_empty() {
             Key::generate()
-        } else if key.as_bytes().len() < 32 {
-            warn!("SESSION_SECRET must be at least 256 bytes long!");
+        } else if key.as_bytes().len() < 64 {
+            warn!("SESSION_SECRET must be at least 512 bytes long!");
             warn!("Generating random session key...");
             Key::generate()
         } else {

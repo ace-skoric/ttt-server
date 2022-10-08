@@ -1,3 +1,4 @@
+use log::warn;
 use std::fmt::Display;
 
 use actix_session::SessionInsertError;
@@ -59,7 +60,7 @@ impl From<TttDbErr> for TttApiErr {
 
 impl From<serde_json::Error> for TttApiErr {
     fn from(err: serde_json::Error) -> Self {
-        println!("{:?}", err);
+        warn!("{:?}", err);
         Self {
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
             body: "Internal server error".into(),
@@ -69,7 +70,7 @@ impl From<serde_json::Error> for TttApiErr {
 
 impl From<SessionInsertError> for TttApiErr {
     fn from(err: SessionInsertError) -> Self {
-        println!("{:?}", err);
+        warn!("{:?}", err);
         Self {
             status_code: StatusCode::INTERNAL_SERVER_ERROR,
             body: "Internal server error".into(),

@@ -1,4 +1,5 @@
 use crate::MatchmakingWorker;
+use log::{debug, info};
 
 use super::message::{AlreadyQueued, MatchMessage, WsMessage};
 use crate::worker::messages::{AddUserToQueue, RemoveUserFromQueue};
@@ -32,7 +33,7 @@ impl Actor for MatchmakingWebsocket {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        println!("User {} entered matchmaking", self.user_id);
+        info!("User {} entered matchmaking", self.user_id);
         let msg = AddUserToQueue(self.user_id, ctx.address());
         self.mm_worker.do_send(msg);
         self.hb(ctx);
@@ -49,7 +50,7 @@ impl MatchmakingWebsocket {
     fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                println!("Disconnecting failed heartbeat");
+                debug!("Disconnecting failed heartbeat");
                 ctx.stop();
                 return;
             }
