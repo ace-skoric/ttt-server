@@ -18,6 +18,7 @@ uuid = { version = "1.1.2", features = ["v4"] }
 actix-session = { version = "0.7.2", features = ["redis-rs-session"] }
 actix-web-actors = "4.1.0"
 redis = "0.21.6"
+tinytemplate = "1.1"
 
 [dependencies.ttt-db]
 path = "./ttt-db"

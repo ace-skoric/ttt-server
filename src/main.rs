@@ -75,6 +75,7 @@ async fn main() -> std::io::Result<()> {
                     .configure(elo::init_routes)
                     .configure(game::init_routes),
             )
+            .configure(email_verify_front::init_routes)
     });
     let host = &*env::HOST.as_str();
     let port = *env::PORT;
