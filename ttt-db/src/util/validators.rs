@@ -45,7 +45,7 @@ pub(crate) fn hash_password(password: &str) -> String {
 
 pub(crate) fn verify_password(password: &str, hash: &str) -> bool {
     let password = password.as_bytes();
-    let secret = env::var("HASH_SECRET").expect("HASH_SECRET not set");
+    let secret = env::var("PASSWORD_HASH_SECRET").expect("HASH_SECRET not set");
     let secret = secret.as_bytes();
 
     let res = argon2::verify_encoded_ext(hash, password, secret, &[]);
