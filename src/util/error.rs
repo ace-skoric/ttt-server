@@ -49,6 +49,7 @@ impl From<TttDbErr> for TttApiErr {
             UserNotFound => StatusCode::NOT_FOUND,
             InvalidPassword => StatusCode::BAD_REQUEST,
             EmailVerifyNotFound => StatusCode::NOT_FOUND,
+            EmailVerifyExpired => StatusCode::GONE,
             UserAlreadyQueued => StatusCode::CONFLICT,
             _ => StatusCode::INTERNAL_SERVER_ERROR,
         };

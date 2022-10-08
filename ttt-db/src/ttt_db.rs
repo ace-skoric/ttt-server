@@ -30,6 +30,7 @@ pub enum TttDbErr {
     InvalidPassword,
     Unhandled,
     UserAlreadyQueued,
+    EmailVerifyExpired,
     Generic(String),
     DbErr(sea_orm::DbErr),
 }
@@ -44,6 +45,7 @@ impl ToString for TttDbErr {
             Self::EmailVerifyNotFound => "Email verification not found.".into(),
             Self::Unhandled => "Unhandled error occured.".into(),
             Self::UserAlreadyQueued => "User is already in the matchmaking queue.".into(),
+            Self::EmailVerifyExpired => "Email verification link expired.".into(),
             Self::Generic(s) => s.to_string(),
             Self::DbErr(err) => err.to_string(),
         }

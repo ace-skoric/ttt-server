@@ -19,24 +19,21 @@ async fn verify(
     };
     db.verify_email(*uuid, f).await?;
     Ok(HttpResponse::Created().json("Welcome to Crystalium"))
-    //     Err(e) => {
-    //         match e {
-    //             DbErr::Custom(e) => {
-    //                 match e.as_str() {
-    //                     "None found" => Ok(HttpResponse::NotFound().json("Resource not found")),
-    //                     "Validation link expired" => Ok(HttpResponse::Gone().json("Validation link expired")),
-    //                     _ => Ok(HttpResponse::InternalServerError().body("Unhandled error occured"))
-    //                 }
-    //             },
-    //             _ => Ok(HttpResponse::InternalServerError().body("Unhandled error occured"))
-    //         }
-    //     }
-    // }
 }
 
 #[post("/verify/resend")]
-async fn resend_verification_email(_data: web::Data<AppState>) -> Result<HttpResponse, TttApiErr> {
-    Ok(HttpResponse::NotImplemented().json("Function not implemented"))
+async fn resend_verification_email(
+    data: web::Data<AppState>,
+    session: Session,
+) -> Result<HttpResponse, TttApiErr> {
+    let user = session.get_data()?;
+    let db = &data.ttt_db;
+    let mailer = data.mail_worker.clone();
+    let f = move |username: String, email: String, uuid: Uuid| {
+        mailer.do_send(SendVerificationEmail::new(username, email, uuid))
+    };
+    db.resend_verification_email(user.id, f).await?;
+    Ok(HttpResponse::Created().json("Email sent"))
 }
 
 #[get("/verify/status")]
