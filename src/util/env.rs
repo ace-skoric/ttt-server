@@ -5,7 +5,7 @@ use log::{error, info, warn};
 use std::{env, process::exit};
 
 lazy_static! {
-    pub static ref HOST: String = env::var("HOST").unwrap_or("0.0.0.0".to_string());
+    pub static ref HOST: String = env::var("HOST").unwrap_or("localhost".to_string());
     pub static ref PORT: u16 = env::var("PORT")
         .unwrap_or("3000".to_string())
         .parse::<u16>()
