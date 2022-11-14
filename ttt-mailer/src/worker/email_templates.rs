@@ -17,16 +17,16 @@ pub(crate) fn verification_email(
 }
 
 pub(crate) fn verification_email_raw(username: &str, uuid: &Uuid) -> String {
-    format!(
-        "Hi {},\n
-        Thanks for getting started with our Tic Tac Toe!\n
-        Click below to confirm your email address:\n
-        https://{}/email_verification/{}\n
-        If you have problems, please paste the above URL into your web browser.",
-        username,
-        env::var("DOMAIN").expect("DOMAIN not set!"),
+    let pt1 = format!("Hi {},\n", username);
+    let pt2 = "Thanks for getting started with our Tic Tac Toe!\n";
+    let pt3 = "Click below to confirm your email address:\n";
+    let pt4 = format!(
+        "http://{}/email_verification/{}\n",
+        env::var("Domain").expect("DOMAIN  not set!"),
         uuid
-    )
+    );
+    let pt5 = "If you have problems, please paste the above URL into your web browser.";
+    pt1 + pt2 + pt3 + &pt4 + pt5
 }
 
 pub(crate) fn verification_email_stdout(
@@ -36,10 +36,11 @@ pub(crate) fn verification_email_stdout(
     uuid: &Uuid,
 ) -> String {
     format!(
-        "\nFrom: Tic Tac Toe <{}>\n
-    To: {} <{}>\n
+        "
+    From: Tic Tac Toe <{}>
+    To: {} <{}>
     Subject: Email verification\n
-    {}
+        {}
     ",
         sender,
         username,

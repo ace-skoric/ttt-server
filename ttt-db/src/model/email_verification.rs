@@ -45,9 +45,10 @@ impl TttDbConn {
                     }
                     false => {
                         q.delete(&tx).await?;
-                        let mut user: users::ActiveModel = user.into();
+                        let mut user: users::ActiveModel = user.into_active_model();
                         user.email_verified = Set(true);
                         user.update(&tx).await?;
+                        tx.commit().await?;
                         Ok(())
                     }
                 }
@@ -69,6 +70,9 @@ impl TttDbConn {
             Some(user) => user,
             None => return Err(TttDbErr::UserNotFound),
         };
+        if user.email_verified {
+            return Err(TttDbErr::Generic("Email already verified".to_string()));
+        }
         let res = email_verification::Entity::find()
             .filter(email_verification::Column::Email.eq(user.email.clone()))
             .all(&tx)

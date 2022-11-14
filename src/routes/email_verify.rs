@@ -23,7 +23,7 @@ async fn verify(
         mailer.do_send(SendVerificationEmail::new(username, email, uuid))
     };
     db.verify_email(uuid, f).await?;
-    Ok(HttpResponse::Created().json("Welcome to Crystalium"))
+    Ok(HttpResponse::Created().json("Welcome to Tic Tac Toe"))
 }
 
 #[post("/verify/resend")]
