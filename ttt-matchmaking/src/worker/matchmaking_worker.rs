@@ -26,8 +26,8 @@ impl MatchmakingWorker {
         }
     }
     fn new_match(&self, new_match: Match) {
-        let uuid = new_match.match_id.to_string();
-        let msg = MatchMessage(uuid);
+        let uuid = new_match.match_id.clone();
+        let msg = MatchMessage { msg: "Match found".to_string(), match_id: uuid };
         let user_ids = (new_match.players.0.user_id, new_match.players.1.user_id);
         self.game_server.do_send(CreateNewGame(new_match));
         let addrs = (

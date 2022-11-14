@@ -1,13 +1,14 @@
 use actix::prelude::Message;
-
-#[derive(Message)]
-#[rtype(result = "()")]
-pub(crate) struct WsMessage(pub String);
+use serde::Serialize;
+use uuid::Uuid;
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub(crate) struct AlreadyQueued;
 
-#[derive(Message, Clone)]
+#[derive(Message, Clone, Serialize)]
 #[rtype(result = "()")]
-pub(crate) struct MatchMessage(pub String);
+pub(crate) struct MatchMessage {
+    pub msg: String,
+    pub match_id: Uuid,
+}

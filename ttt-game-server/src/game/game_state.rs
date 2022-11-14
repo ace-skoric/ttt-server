@@ -1,24 +1,23 @@
 use std::{collections::HashMap, rc::Rc};
 
 use serde::Serialize;
-use serde_repr::Serialize_repr;
 
 use ttt_db::PlayerData;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr)]
-#[repr(i16)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
 pub enum Sign {
-    X = 0,
-    O = 1,
+    X,
+    O,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize_repr)]
-#[repr(i16)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum State {
-    Created = 0,
-    Starting = 1,
-    Running = 2,
-    Ended = 3,
+    Created,
+    Starting,
+    Started,
+    Running,
+    Ended,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -136,31 +135,31 @@ impl GameState {
     }
 }
 
-#[derive(Debug, Clone, Copy, Serialize_repr)]
-#[repr(i16)]
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum Winner {
-    You = 0,
-    Opponent = 1,
-    Draw = 2,
-    None = -1,
+    You,
+    Opponent,
+    Draw,
+    None,
 }
 
-#[derive(Debug, Clone, Copy, Serialize_repr)]
-#[repr(i16)]
+#[derive(Debug, Clone, Copy, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub enum UserPlayer {
-    You = 0,
-    Opponent = 1,
-    None = -1,
+    You,
+    Opponent,
+    None,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Clone, Debug, Serialize)]
 pub struct UserGameState {
     pub winner: Winner,
     pub state: State,
     pub board: [Option<Sign>; 9],
     pub turn_player: UserPlayer,
-    pub your_data: Rc<Player>,
-    pub opp_data: Rc<Player>,
+    pub your_data: Player,
+    pub opp_data: Player,
 }
 
 impl UserGameState {
@@ -194,6 +193,8 @@ impl UserGameState {
             Winner::Draw
         };
         let state = state.state;
+        let your_data = (&*your_data).clone();
+        let opp_data = (&*opp_data).clone();
         Self {
             winner,
             state,

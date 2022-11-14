@@ -12,7 +12,7 @@ use crate::{
     game::game_state::State,
     server::{messages::GameEnded, GameServer},
     timer::{GetTimer, PauseTimer, StartTimer, StopTimer, Timer},
-    ws::{GameWebsocket, ServerResponseMessage},
+    ws::{GameWebsocket, ServerResponseMessage, ServerResponse},
 };
 
 use super::{
@@ -63,7 +63,8 @@ impl Actor for Game {
             this.game_state.state = State::Starting;
             let mut iter = this.addrs.iter();
             while let Some((_, addr)) = iter.next() {
-                addr.do_send(ServerResponseMessage::new("starting", "Game starting soon"));
+                let msg = ServerResponseMessage(ServerResponse::GameStatus(State::Starting));
+                addr.do_send(msg);
             }
         });
         ctx.run_later(Duration::from_secs(3), move |this, _| {
@@ -72,9 +73,11 @@ impl Actor for Game {
             this.timers.get(&first_turn).unwrap().do_send(StartTimer);
             let mut iter = this.addrs.iter();
             while let Some((user_id, addr)) = iter.next() {
-                let game_state = this.game_state.to_msg(*user_id).serialize();
-                addr.do_send(ServerResponseMessage::new("started", "Game started"));
-                addr.do_send(ServerResponseMessage::new("game_state", &game_state));
+                let msg = ServerResponseMessage(ServerResponse::GameStatus(State::Started));
+                addr.do_send(msg);
+                let game_state = this.game_state.to_msg(*user_id).clone();
+                let msg = ServerResponseMessage(ServerResponse::GameState(game_state));
+                addr.do_send(msg);
             }
             info!("Game {} started", this.id);
         });
@@ -91,8 +94,9 @@ impl Handler<UserJoined> for Game {
     fn handle(&mut self, msg: UserJoined, _: &mut Self::Context) -> Self::Result {
         let (user_id, addr) = (msg.0, msg.1);
         self.addrs.insert(user_id, addr.clone());
-        let game_state = self.game_state.to_msg(user_id).serialize();
-        addr.do_send(ServerResponseMessage::new("game_state", &game_state));
+        let game_state = self.game_state.to_msg(user_id).clone();
+        let msg = ServerResponseMessage(ServerResponse::GameState(game_state));
+        addr.do_send(msg);
         info!("User {} joined game {}", user_id, self.id);
     }
 }
@@ -139,66 +143,52 @@ impl Handler<ClientCommandMessage> for Game {
         match cmd {
             ClientCommand::Play(i) => match self.game_state.state {
                 State::Created | State::Starting => {
-                    let msg = ServerResponseMessage::new("error", "Game not started yet");
+                    let msg = ServerResponseMessage(ServerResponse::Error("Game not started yet".to_string()));
                     if let Some(addr) = player_addr {
                         addr.do_send(msg);
                     }
                     return;
                 }
                 State::Ended => {
-                    let msg = ServerResponseMessage::new("error", "Game ended");
+                    let msg = ServerResponseMessage(ServerResponse::Error("Game ended".to_string()));
                     if let Some(addr) = player_addr {
                         addr.do_send(msg);
                     }
                     return;
                 }
-                State::Running => {
-                    if self.game_state.turn_player.is_none() {
-                        let msg = ServerResponseMessage::new("error", "Not your turn");
+                State::Running | State::Started => {
+                    if self.game_state.turn_player.is_none() || self.game_state.turn_player.unwrap() != user_id {
+                        let msg = ServerResponseMessage(ServerResponse::Error("Not your turn".to_string()));
                         if let Some(addr) = player_addr {
                             addr.do_send(msg);
                         }
                         return;
-                    } else if self.game_state.turn_player.unwrap() != user_id {
-                        let msg = ServerResponseMessage::new("error", "Not your turn");
-                        if let Some(addr) = player_addr {
-                            addr.do_send(msg);
-                        }
-                        return;
-                    } else {
+                    }
+                    else {
                         if self.game_state.play(user_id, i) {
                             self.game_state.turn_player = Some(opp_id);
                             let player_timer = self.timers.get(&player_id).unwrap();
                             let opp_timer = self.timers.get(&opp_id).unwrap();
                             player_timer.do_send(PauseTimer {});
                             opp_timer.do_send(StartTimer {});
-                            let p_message = ServerResponseMessage::new("you_play", &i.to_string());
-                            let opp_message =
-                                ServerResponseMessage::new("opp_play", &i.to_string());
+                            let p_message = ServerResponseMessage(ServerResponse::YouPlay(i));
+                            let opp_message = ServerResponseMessage(ServerResponse::OppPlay(i));
                             let p_turn_player = self.game_state.to_msg(player_id).turn_player;
-                            let p_turn_player = serde_json::to_string(&p_turn_player).unwrap();
                             let opp_turn_player = self.game_state.to_msg(opp_id).turn_player;
-                            let opp_turn_player = serde_json::to_string(&opp_turn_player).unwrap();
                             if let Some(addr) = player_addr {
                                 addr.do_send(p_message);
-                                addr.do_send(ServerResponseMessage::new(
-                                    "turn_player",
-                                    &p_turn_player,
-                                ));
+                                addr.do_send(ServerResponseMessage(ServerResponse::TurnPlayer(p_turn_player)));
                             }
                             if let Some(addr) = opp_addr {
                                 addr.do_send(opp_message);
-                                addr.do_send(ServerResponseMessage::new(
-                                    "turn_player",
-                                    &opp_turn_player,
-                                ));
+                                addr.do_send(ServerResponseMessage(ServerResponse::TurnPlayer(opp_turn_player)));
                             }
                             if self.game_state.check_endgame() {
                                 ctx.notify(EndgameMessage {});
                             }
                             return;
                         } else {
-                            let msg = ServerResponseMessage::new("error", "Not your turn");
+                            let msg = ServerResponseMessage(ServerResponse::Error("Not your turn".to_string()));
                             if let Some(addr) = player_addr {
                                 addr.do_send(msg);
                             }
@@ -209,25 +199,24 @@ impl Handler<ClientCommandMessage> for Game {
             },
             ClientCommand::Hover(i) => {
                 if let Some(addr) = opp_addr {
-                    addr.do_send(ServerResponseMessage::new("opp_hover", &i.to_string()));
+                    addr.do_send(ServerResponseMessage(ServerResponse::OppHover(i)));
                 }
             }
             ClientCommand::Unhover(i) => {
                 if let Some(addr) = opp_addr {
-                    addr.do_send(ServerResponseMessage::new("opp_unhover", &i.to_string()));
+                    addr.do_send(ServerResponseMessage(ServerResponse::OppUnhover(i)));
                 }
             }
             ClientCommand::GetTurnPlayer => {
                 if let Some(addr) = player_addr {
                     let turn_player = self.game_state.to_msg(player_id).turn_player;
-                    let turn_player = serde_json::to_string(&turn_player).unwrap();
-                    addr.do_send(ServerResponseMessage::new("turn_player", &turn_player));
+                    addr.do_send(ServerResponseMessage(ServerResponse::TurnPlayer(turn_player)));
                 }
             }
             ClientCommand::GetGameState => {
                 if let Some(addr) = player_addr {
-                    let game_state = self.game_state.to_msg(player_id).serialize();
-                    addr.do_send(ServerResponseMessage::new("game_state", &game_state));
+                    let game_state = self.game_state.to_msg(player_id);
+                    addr.do_send(ServerResponseMessage(ServerResponse::GameState(game_state)));
                 }
             }
             ClientCommand::GetTimers => {
@@ -250,10 +239,7 @@ impl Handler<ClientCommandMessage> for Game {
                         )
                     });
                     let time = time.map(|res, _, _| {
-                        res.0.do_send(ServerResponseMessage::new(
-                            "timers",
-                            &serde_json::to_string(&res.1).unwrap(),
-                        ))
+                        res.0.do_send(ServerResponseMessage(ServerResponse::Time(res.1)));
                     });
                     ctx.spawn(time);
                 }
@@ -268,7 +254,6 @@ impl Handler<ClientCommandMessage> for Game {
                 self.game_state.winner = Some(winner_id);
                 ctx.notify(EndgameMessage {});
             }
-            ClientCommand::Error(_) => (),
         }
     }
 }
@@ -282,6 +267,8 @@ impl Handler<EndgameMessage> for Game {
         let winner = self.game_state.winner;
         let mut msg = "Draw";
         for (user_id, addr) in iter {
+            let game_state = self.game_state.to_msg(*user_id);
+            addr.do_send(ServerResponseMessage(ServerResponse::GameState(game_state)));
             if let Some(winner_id) = winner {
                 if *user_id == winner_id {
                     msg = "Victory!";
@@ -289,7 +276,7 @@ impl Handler<EndgameMessage> for Game {
                     msg = "Defeat";
                 }
             }
-            addr.do_send(ServerResponseMessage::new("result", msg));
+            addr.do_send(ServerResponseMessage(ServerResponse::GameResult(msg.to_string())));
         }
         let iter = self.timers.iter();
         for (_, addr) in iter {

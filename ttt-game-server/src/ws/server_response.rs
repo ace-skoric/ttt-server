@@ -1,25 +1,24 @@
 use actix::Message;
 use serde::Serialize;
 
-#[derive(Message, Serialize)]
-#[rtype(result = "()")]
-pub(crate) struct ServerResponseMessage {
-    pub cmd: String,
-    pub msg: String,
+use crate::game::game_state::{State, Timers, UserGameState, UserPlayer};
+
+#[derive(Serialize)]
+#[serde(tag = "cmd", content = "msg")]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum ServerResponse {
+    OppUnhover(usize),
+    OppHover(usize),
+    YouPlay(usize),
+    OppPlay(usize),
+    TurnPlayer(UserPlayer),
+    GameStatus(State),
+    GameResult(String),
+    GameState(UserGameState),
+    Time(Timers),
+    Error(String),
 }
 
-impl ServerResponseMessage {
-    pub(crate) fn new(cmd: &str, msg: &str) -> Self {
-        Self {
-            cmd: cmd.to_string(),
-            msg: msg.to_string(),
-        }
-    }
-}
-
 #[derive(Message, Serialize)]
 #[rtype(result = "()")]
-pub(crate) struct TimerMessage {
-    pub your_time: f64,
-    pub opp_time: f64,
-}
+pub(crate) struct ServerResponseMessage(pub ServerResponse);

@@ -1,7 +1,7 @@
 use crate::MatchmakingWorker;
 use log::{debug, info};
 
-use super::message::{AlreadyQueued, MatchMessage, WsMessage};
+use super::message::{AlreadyQueued, MatchMessage};
 use crate::worker::messages::{AddUserToQueue, RemoveUserFromQueue};
 use actix::{Actor, Running, StreamHandler};
 use actix::{ActorContext, Addr};
@@ -90,14 +90,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for MatchmakingWebsoc
     }
 }
 
-impl Handler<WsMessage> for MatchmakingWebsocket {
-    type Result = ();
-
-    fn handle(&mut self, msg: WsMessage, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
-    }
-}
-
 impl Handler<AlreadyQueued> for MatchmakingWebsocket {
     type Result = ();
 
@@ -111,8 +103,11 @@ impl Handler<MatchMessage> for MatchmakingWebsocket {
     type Result = ();
 
     fn handle(&mut self, msg: MatchMessage, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
-        ctx.close(Some(CloseReason::from(CloseCode::Normal)));
-        ctx.stop();
+        let msg = serde_json::to_string(&msg).unwrap();
+        ctx.text(msg);
+        ctx.run_later(Duration::from_secs(1), |_, ctx| {
+            ctx.close(Some(CloseReason::from(CloseCode::Normal)));
+            ctx.stop();
+        });
     }
 }

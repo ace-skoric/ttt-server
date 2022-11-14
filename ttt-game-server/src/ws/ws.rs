@@ -2,7 +2,7 @@ use crate::game::command::ClientCommand;
 use crate::game::messages::{ClientCommandMessage, UserJoined, UserLeft};
 use crate::game::Game;
 
-use super::{message::*, ServerResponseMessage};
+use super::{message::*, ServerResponse, ServerResponseMessage};
 use actix::{Actor, Running, StreamHandler};
 use actix::{ActorContext, Addr};
 use actix::{AsyncContext, Handler};
@@ -78,23 +78,24 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for GameWebsocket {
             }
             Ok(ws::Message::Nop) => (),
             Ok(Text(s)) => {
-                let cmd = ClientCommand::parse_command(s.to_string());
-                if let ClientCommand::Error(s) = cmd {
-                    ctx.text(s);
-                } else {
-                    self.game.do_send(ClientCommandMessage(self.user_id, cmd));
+                let cmd = serde_json::from_str::<ClientCommand>(&s);
+                match cmd {
+                    Ok(cmd) => {
+                        if cmd.check_valid_field() {
+                            self.game.do_send(ClientCommandMessage(self.user_id, cmd));
+                        } else {
+                            ctx.text("Invalid command");
+                            return;
+                        }
+                    }
+                    Err(_) => {
+                        ctx.text("Invalid command");
+                        return;
+                    }
                 }
             }
             Err(e) => panic!("{}", e),
         }
-    }
-}
-
-impl Handler<WsMessage> for GameWebsocket {
-    type Result = ();
-
-    fn handle(&mut self, msg: WsMessage, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
     }
 }
 
@@ -111,11 +112,12 @@ impl Handler<ServerResponseMessage> for GameWebsocket {
     type Result = ();
 
     fn handle(&mut self, msg: ServerResponseMessage, ctx: &mut Self::Context) {
+        let msg = msg.0;
         let text = serde_json::to_string(&msg).unwrap();
         ctx.text(text);
-        if msg.cmd == "result" {
+        if let ServerResponse::GameResult(_) = msg {
             ctx.run_later(Duration::from_secs(3), |_, ctx| {
-                ctx.close(Some(CloseReason::from(CloseCode::Error)));
+                ctx.close(Some(CloseReason::from(CloseCode::Normal)));
                 ctx.stop();
             });
         }
