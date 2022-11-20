@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 actix = "0.13.0"
 log = "0.4.17"
-lettre = {version = "0.10.1", features = ["tokio1-native-tls"]}
+lettre = {version = "0.10.1", default-features = false, features = ["smtp-transport", "pool", "hostname", "builder", "tokio1-rustls-tls"]}
 uuid = { version = "1.1.2", features = ["v4"] }
