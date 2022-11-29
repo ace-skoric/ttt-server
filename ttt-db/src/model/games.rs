@@ -4,10 +4,8 @@ use redis::AsyncCommands;
 use sea_orm::entity::*;
 use sea_orm::prelude::DateTimeWithTimeZone;
 use sea_orm::ActiveValue::Set;
-use skillratings::config::EloConfig;
-use skillratings::elo::elo;
-use skillratings::outcomes::Outcomes;
-use skillratings::rating::EloRating;
+use skillratings::Outcomes;
+use skillratings::elo::{EloConfig, EloRating, elo};
 use uuid::Uuid;
 
 impl TttDbConn {
@@ -91,9 +89,9 @@ impl TttDbConn {
             Outcomes::LOSS => (p1_data.wins, p1_data.draws, p1_data.losses + 1),
         };
         let p2_games = match outcome {
-            Outcomes::WIN => (p2_data.wins, p1_data.draws, p1_data.losses + 1),
-            Outcomes::DRAW => (p2_data.wins, p1_data.draws + 1, p1_data.losses),
-            Outcomes::LOSS => (p2_data.wins + 1, p1_data.draws, p1_data.losses),
+            Outcomes::WIN => (p2_data.wins, p2_data.draws, p2_data.losses + 1),
+            Outcomes::DRAW => (p2_data.wins, p2_data.draws + 1, p2_data.losses),
+            Outcomes::LOSS => (p2_data.wins + 1, p2_data.draws, p2_data.losses),
         };
         let (p1_elo, p2_elo) = elo(&p1_elo, &p2_elo, &outcome, &config);
         let p1_elo = p1_elo.rating as i64;

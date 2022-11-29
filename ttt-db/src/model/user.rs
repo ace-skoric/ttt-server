@@ -2,9 +2,10 @@ use crate::ttt_db::{TttDbConn, TttDbErr};
 use crate::util::validators::*;
 
 use convert_case::{Case, Casing};
+use log::warn;
 use petname::Petnames;
 use sea_orm::ActiveValue::Set;
-use sea_orm::{entity::*, QueryFilter, TransactionTrait};
+use sea_orm::{entity::*, QueryFilter, TransactionTrait, RuntimeErr};
 use uuid::Uuid;
 
 use crate::entity::email_verification::ActiveModel as EmailVerificationActiveModel;
@@ -61,14 +62,19 @@ impl TttDbConn {
         .await;
         if let Err(err) = res {
             match err {
-                sea_orm::DbErr::Query(s) => {
-                    if s.contains("users_unique_username") {
-                        return Err(TttDbErr::UsernameConfilct);
-                    } else if s.contains("users_unique_email") {
-                        return Err(TttDbErr::EmailConflict);
-                    } else {
-                        return Err(TttDbErr::DbErr(sea_orm::DbErr::Query(s)));
+                sea_orm::DbErr::Query(RuntimeErr::SqlxError(s)) => {
+                    if let Some(err) = s.as_database_error() {
+                        if let Some(c) = err.constraint() {
+                            match c {
+                                "users_unique_username" => return Err(TttDbErr::UsernameConfilct),
+                                "users_unique_email" => return Err(TttDbErr::EmailConflict),
+                                _ => return Err(TttDbErr::Unhandled)
+                            }
+                        }
+                        return Err(TttDbErr::Unhandled);
                     }
+                    warn!("{}", s);
+                    return Err(TttDbErr::Unhandled);
                 }
                 _ => return Err(TttDbErr::DbErr(err)),
             }
@@ -141,14 +147,19 @@ impl TttDbConn {
         let res = active_model.update(&tx).await;
         if let Err(err) = res {
             match err {
-                sea_orm::DbErr::Query(s) => {
-                    if s.contains("users_unique_username") {
-                        return Err(TttDbErr::UsernameConfilct);
-                    } else if s.contains("users_unique_email") {
-                        return Err(TttDbErr::EmailConflict);
-                    } else {
-                        return Err(TttDbErr::DbErr(sea_orm::DbErr::Query(s)));
+                sea_orm::DbErr::Query(RuntimeErr::SqlxError(s)) => {
+                    if let Some(err) = s.as_database_error() {
+                        if let Some(c) = err.constraint() {
+                            match c {
+                                "users_unique_username" => return Err(TttDbErr::UsernameConfilct),
+                                "users_unique_email" => return Err(TttDbErr::EmailConflict),
+                                _ => return Err(TttDbErr::Unhandled)
+                            }
+                        }
+                        return Err(TttDbErr::Unhandled);
                     }
+                    warn!("{}", s);
+                    return Err(TttDbErr::Unhandled);
                 }
                 _ => return Err(TttDbErr::DbErr(err)),
             }
@@ -202,14 +213,19 @@ impl TttDbConn {
         .await;
         if let Err(err) = res {
             match err {
-                sea_orm::DbErr::Query(s) => {
-                    if s.contains("users_unique_username") {
-                        return Err(TttDbErr::UsernameConfilct);
-                    } else if s.contains("users_unique_email") {
-                        return Err(TttDbErr::EmailConflict);
-                    } else {
-                        return Err(TttDbErr::DbErr(sea_orm::DbErr::Query(s)));
+                sea_orm::DbErr::Query(RuntimeErr::SqlxError(s)) => {
+                    if let Some(err) = s.as_database_error() {
+                        if let Some(c) = err.constraint() {
+                            match c {
+                                "users_unique_username" => return Err(TttDbErr::UsernameConfilct),
+                                "users_unique_email" => return Err(TttDbErr::EmailConflict),
+                                _ => return Err(TttDbErr::Unhandled)
+                            }
+                        }
+                        return Err(TttDbErr::Unhandled);
                     }
+                    warn!("{}", s);
+                    return Err(TttDbErr::Unhandled);
                 }
                 _ => return Err(TttDbErr::DbErr(err)),
             }
