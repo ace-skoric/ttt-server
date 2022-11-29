@@ -157,7 +157,9 @@ Project Link: [https://github.com/ace-skoric/ttt-server](https://github.com/ace-
 
 [Matcha](https://github.com/redis-developer/matcha) - Inspiration for matchmaking logic
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 <!-- MARKDOWN LINKS & IMAGES -->
+
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/ace-skoric/ttt-server.svg?style=flat
 [contributors-url]: https://github.com/ace-skoric/ttt-server/graphs/contributors
