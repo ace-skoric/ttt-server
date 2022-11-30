@@ -22,7 +22,7 @@
     Authoritative server
     <br />
     <br />
-    <a href="https://github.com/ace-skoric/ttt-client">Client repo</a>
+    <a href="https://github.com/ace-skoric/ttt-client">Client Repo</a>
     ·
     <a href="https://github.com/ace-skoric/ttt-server/issues">Report Bug</a>
     ·
@@ -153,7 +153,7 @@ Project Link: [https://github.com/ace-skoric/ttt-server](https://github.com/ace-
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-[Icon created by Freepik]("https://www.flaticon.com/free-icons/tic-tac-toe")
+[Icon created by Freepik](https://www.flaticon.com/free-icons/tic-tac-toe)
 
 [Matcha](https://github.com/redis-developer/matcha) - Inspiration for matchmaking logic
 
